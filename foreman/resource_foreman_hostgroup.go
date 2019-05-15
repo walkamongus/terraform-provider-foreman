@@ -102,6 +102,40 @@ func resourceForemanHostgroup() *schema.Resource {
 				Description:  "ID of the operating system associated with this hostgroup.",
 			},
 
+			"parameters": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "ID of the operating system associated with this hostgroup.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"created_at": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"id": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"priority": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"updated_at": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+
 			"parent_id": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
@@ -196,6 +230,25 @@ func buildForemanHostgroup(d *schema.ResourceData) *api.ForemanHostgroup {
 		hostgroup.OperatingSystemId = attr.(int)
 	}
 
+	// I don't know what black magic needs to happen for running tests
+	// uncommenting the following will cause tests to fail with type errors
+	//if attr, ok = d.GetOk("parameters.#"); ok {
+	//	params := make([]api.ForemanHostgroupParameter, attr.(int))
+	//	for i := 0; i < attr.(int); i++ {
+	//		idx := strconv.Itoa(i)
+	//		param := api.ForemanHostgroupParameter{
+	//			ID:        d.Get("parameters." + idx + "id").(int64),
+	//			Name:      d.Get("parameters." + idx + "name").(string),
+	//			Value:     d.Get("parameters." + idx + "value").(string),
+	//			CreatedAt: d.Get("parameters." + idx + "created_at").(string),
+	//			UpdatedAt: d.Get("parameters." + idx + "updated_at").(string),
+	//			Priority:  d.Get("parameters." + idx + "priority").(int64),
+	//		}
+	//		params = append(params, param)
+	//	}
+	//	hostgroup.Parameters = params
+	//}
+
 	if attr, ok = d.GetOk("parent_id"); ok {
 		hostgroup.ParentId = attr.(int)
 	}
@@ -228,21 +281,65 @@ func buildForemanHostgroup(d *schema.ResourceData) *api.ForemanHostgroup {
 func setResourceDataFromForemanHostgroup(d *schema.ResourceData, fh *api.ForemanHostgroup) {
 	log.Tracef("resource_foreman_hostgroup.go#setResourceDataFromForemanHostgroup")
 
+	params := make([]map[string]interface{}, len(fh.Parameters))
+	for k, v := range fh.Parameters {
+		param := make(map[string]interface{})
+		param["name"] = v.Name
+		param["value"] = v.Value
+		param["created_at"] = v.CreatedAt
+		param["id"] = v.ID
+		param["priority"] = v.Priority
+		param["updated_at"] = v.UpdatedAt
+		params[k] = param
+	}
+
 	d.SetId(strconv.Itoa(fh.Id))
-	d.Set("title", fh.Title)
-	d.Set("name", fh.Name)
-	d.Set("architecture_id", fh.ArchitectureId)
-	d.Set("compute_profile_id", fh.ComputeProfileId)
-	d.Set("domain_id", fh.DomainId)
-	d.Set("environment_id", fh.EnvironmentId)
-	d.Set("medium_id", fh.MediaId)
-	d.Set("operatingsystem_id", fh.OperatingSystemId)
-	d.Set("parent_id", fh.ParentId)
-	d.Set("ptable_id", fh.PartitionTableId)
-	d.Set("puppet_ca_proxy_id", fh.PuppetCAProxyId)
-	d.Set("puppet_proxy_id", fh.PuppetProxyId)
-	d.Set("realm_id", fh.RealmId)
-	d.Set("subnet_id", fh.SubnetId)
+
+	if err := d.Set("title", fh.Title); err != nil {
+		log.Errorf("error setting hostgroup title: %s", err)
+	}
+	if err := d.Set("name", fh.Name); err != nil {
+		log.Errorf("error setting hostgroup name: %s", err)
+	}
+	if err := d.Set("architecture_id", fh.ArchitectureId); err != nil {
+		log.Errorf("error setting hostgroup architecture_id: %s", err)
+	}
+	if err := d.Set("compute_profile_id", fh.ComputeProfileId); err != nil {
+		log.Errorf("error setting hostgroup compute_profile_id: %s", err)
+	}
+	if err := d.Set("domain_id", fh.DomainId); err != nil {
+		log.Errorf("error setting hostgroup domain_id: %s", err)
+	}
+	if err := d.Set("environment_id", fh.EnvironmentId); err != nil {
+		log.Errorf("error setting hostgroup environment_id: %s", err)
+	}
+	if err := d.Set("medium_id", fh.MediaId); err != nil {
+		log.Errorf("error setting hostgroup medium_id: %s", err)
+	}
+	if err := d.Set("operatingsystem_id", fh.OperatingSystemId); err != nil {
+		log.Errorf("error setting hostgroup operatingsystem_id: %s", err)
+	}
+	if err := d.Set("parameters", params); err != nil {
+		log.Errorf("error setting hostgroup parameters: %s", err)
+	}
+	if err := d.Set("parent_id", fh.ParentId); err != nil {
+		log.Errorf("error setting hostgroup parent_id: %s", err)
+	}
+	if err := d.Set("ptable_id", fh.PartitionTableId); err != nil {
+		log.Errorf("error setting hostgroup ptable_id: %s", err)
+	}
+	if err := d.Set("puppet_ca_proxy_id", fh.PuppetCAProxyId); err != nil {
+		log.Errorf("error setting hostgroup puppet_ca_proxy_id: %s", err)
+	}
+	if err := d.Set("puppet_proxy_id", fh.PuppetProxyId); err != nil {
+		log.Errorf("error setting hostgroup puppet_proxy_id: %s", err)
+	}
+	if err := d.Set("realm_id", fh.RealmId); err != nil {
+		log.Errorf("error setting hostgroup realm_id: %s", err)
+	}
+	if err := d.Set("subnet_id", fh.SubnetId); err != nil {
+		log.Errorf("error setting hostgroup subnet_id: %s", err)
+	}
 }
 
 // -----------------------------------------------------------------------------

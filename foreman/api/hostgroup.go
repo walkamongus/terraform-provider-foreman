@@ -25,6 +25,14 @@ const (
 // When hosts get associated with a hostgroup, it will inherit attributes
 // from the hostgroup. This allows for easy shared configuration of various
 // hosts based on common attributes.
+type ForemanHostgroupParameter struct {
+	CreatedAt string `json:"created_at"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Priority  int64  `json:"priority"`
+	UpdatedAt string `json:"updated_at"`
+	Value     string `json:"value"`
+}
 type ForemanHostgroup struct {
 	// Inherits the base object's attributes
 	ForemanObject
@@ -46,6 +54,8 @@ type ForemanHostgroup struct {
 	MediaId int `json:"medium_id"`
 	// ID of the operating system associated with this hostgroup
 	OperatingSystemId int `json:"operatingsystem_id"`
+	// Parameters associated with this hostgroup
+	Parameters []ForemanHostgroupParameter `json:"parameters"`
 	// ID of this hostgroup's parent hostgroup
 	ParentId int `json:"parent_id"`
 	// ID of the partition table to use with this hostgroup
@@ -79,6 +89,7 @@ func (fh ForemanHostgroup) MarshalJSON() ([]byte, error) {
 	fhMap["environment_id"] = intIdToJSONString(fh.EnvironmentId)
 	fhMap["medium_id"] = intIdToJSONString(fh.MediaId)
 	fhMap["operatingsystem_id"] = intIdToJSONString(fh.OperatingSystemId)
+	fhMap["parameters"] = fh.Parameters
 	fhMap["parent_id"] = intIdToJSONString(fh.ParentId)
 	fhMap["ptable_id"] = intIdToJSONString(fh.PartitionTableId)
 	fhMap["puppet_ca_proxy_id"] = intIdToJSONString(fh.PuppetCAProxyId)
@@ -238,6 +249,7 @@ func (c *Client) QueryHostgroup(h *ForemanHostgroup) (QueryResponse, error) {
 	reqQuery := req.URL.Query()
 	title := `"` + h.Title + `"`
 	reqQuery.Set("search", "title="+title)
+	reqQuery.Add("include", `[“parameters”]`)
 
 	req.URL.RawQuery = reqQuery.Encode()
 	sendErr := c.SendAndParse(req, &queryResponse)

@@ -20,7 +20,7 @@ import (
 // -----------------------------------------------------------------------------
 
 const HostgroupsURI = api.FOREMAN_API_URL_PREFIX + "/hostgroups"
-const HostgroupsTestDataPath = "testdata/1.11/hostgroups"
+const HostgroupsTestDataPath = "testdata/1.20/hostgroups"
 
 // Given a ForemanHostgroup, create a mock instance state reference
 func ForemanHostgroupToInstanceState(obj api.ForemanHostgroup) *terraform.InstanceState {
@@ -42,6 +42,16 @@ func ForemanHostgroupToInstanceState(obj api.ForemanHostgroup) *terraform.Instan
 	attr["puppet_proxy_id"] = strconv.Itoa(obj.PuppetProxyId)
 	attr["realm_id"] = strconv.Itoa(obj.RealmId)
 	attr["subnet_id"] = strconv.Itoa(obj.SubnetId)
+	attr["parameters.#"] = strconv.Itoa(len(obj.Parameters))
+	for k, v := range obj.Parameters {
+		kstr := strconv.Itoa(k)
+		attr["parameters."+kstr+".created_at"] = v.CreatedAt
+		attr["parameters."+kstr+".id"] = strconv.FormatInt(v.ID, 10)
+		attr["parameters."+kstr+".name"] = v.Name
+		attr["parameters."+kstr+".priority"] = strconv.FormatInt(v.Priority, 10)
+		attr["parameters."+kstr+".updated_at"] = v.UpdatedAt
+		attr["parameters."+kstr+".value"] = v.Value
+	}
 	state.Attributes = attr
 	return &state
 }
@@ -82,6 +92,10 @@ func RandForemanHostgroup() api.ForemanHostgroup {
 	obj.PuppetProxyId = rand.Intn(100)
 	obj.RealmId = rand.Intn(100)
 	obj.SubnetId = rand.Intn(100)
+	obj.Parameters = []api.ForemanHostgroupParameter{
+		api.ForemanHostgroupParameter{Name: "testone", Value: "1"},
+		api.ForemanHostgroupParameter{Name: "testtwo", Value: "2"},
+	}
 
 	return obj
 }
